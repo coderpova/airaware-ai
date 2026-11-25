@@ -1,8 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { processAirQualityPayload } from './open-meteo';
 import { OpenMeteoAirQualityRaw } from '@/types/api';
 
 describe('Open-Meteo Air Quality Payload Processor', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-19T18:00'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   const mockRawPayload: OpenMeteoAirQualityRaw = {
     latitude: 28.6139,
     longitude: 77.209,

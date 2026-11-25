@@ -57,15 +57,19 @@ export const SettingsView: React.FC = () => {
       {/* Default Location */}
       <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <label
+            htmlFor="settings-default-city"
+            className="block text-base font-bold text-slate-900 dark:text-white"
+          >
             Default City / Home Location
-          </h3>
+          </label>
           <p className="text-xs text-slate-500">
             Automatically loads air quality intelligence for this location on every visit
           </p>
         </div>
 
         <select
+          id="settings-default-city"
           value={prefs.preferredLocation.id}
           onChange={(e) => {
             const loc = QUICK_CITIES.find((c) => c.id === e.target.value);
@@ -94,10 +98,14 @@ export const SettingsView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label
+              htmlFor="settings-activity"
+              className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5"
+            >
               Primary Routine Activity
             </label>
             <select
+              id="settings-activity"
               value={prefs.activity}
               onChange={(e) => handleUpdate({ activity: e.target.value as UserActivity })}
               className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white"
@@ -112,10 +120,14 @@ export const SettingsView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label
+              htmlFor="settings-sensitivity"
+              className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5"
+            >
               Vulnerability Profile
             </label>
             <select
+              id="settings-sensitivity"
               value={prefs.sensitivity}
               onChange={(e) => handleUpdate({ sensitivity: e.target.value as UserSensitivity })}
               className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white"
@@ -144,12 +156,13 @@ export const SettingsView: React.FC = () => {
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              <span>Notify me when AQI exceeds:</span>
+              <label htmlFor="settings-aqi-threshold">Notify me when AQI exceeds:</label>
               <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold">
                 AQI {prefs.aqiAlertThreshold}
               </span>
             </div>
             <input
+              id="settings-aqi-threshold"
               type="range"
               min="100"
               max="400"

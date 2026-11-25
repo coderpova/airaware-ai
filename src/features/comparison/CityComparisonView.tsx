@@ -112,8 +112,11 @@ export const CityComparisonView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">City 1</label>
+            <label htmlFor="compare-city-1" className="block text-xs font-bold text-slate-500 mb-1">
+              City 1
+            </label>
             <select
+              id="compare-city-1"
               value={city1.id}
               onChange={(e) => {
                 const found = QUICK_CITIES.find((c) => c.id === e.target.value);
@@ -130,8 +133,11 @@ export const CityComparisonView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">City 2</label>
+            <label htmlFor="compare-city-2" className="block text-xs font-bold text-slate-500 mb-1">
+              City 2
+            </label>
             <select
+              id="compare-city-2"
               value={city2.id}
               onChange={(e) => {
                 const found = QUICK_CITIES.find((c) => c.id === e.target.value);
@@ -148,8 +154,11 @@ export const CityComparisonView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">City 3 (Optional)</label>
+            <label htmlFor="compare-city-3" className="block text-xs font-bold text-slate-500 mb-1">
+              City 3 (Optional)
+            </label>
             <select
+              id="compare-city-3"
               value={city3?.id || 'none'}
               onChange={(e) => {
                 if (e.target.value === 'none') {

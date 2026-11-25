@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CpcbCalculationResult } from '@/types/aqi';
 import { X, ExternalLink, AlertTriangle, CheckCircle2, ShieldCheck } from 'lucide-react';
 
@@ -17,6 +17,17 @@ export const AqiMethodologyDrawer: React.FC<AqiMethodologyDrawerProps> = ({
   cpcb,
   coveragePercent,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -81,7 +92,7 @@ export const AqiMethodologyDrawer: React.FC<AqiMethodologyDrawerProps> = ({
               1. Mathematical Sub-Index Formula
             </h4>
             <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400 mb-2">
-              For each pollutant, the sub-index $I_p$ is calculated using linear interpolation between official breakpoint ranges:
+              For each pollutant, the sub-index <em>I<sub>p</sub></em> is calculated using linear interpolation between official breakpoint ranges:
             </p>
             <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-mono text-xs text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700">
               Ip = [ (I_HI - I_LO) / (B_HI - B_LO) ] × (Cp - B_LO) + I_LO
@@ -104,7 +115,8 @@ export const AqiMethodologyDrawer: React.FC<AqiMethodologyDrawerProps> = ({
                 <strong>Mandatory Particulates:</strong> At least one particulate matter parameter (PM2.5 or PM10) must be present.
               </li>
               <li>
-                <strong>Overall AQI Rule:</strong> Overall AQI is dictated by the maximum sub-index (dominant pollutant): $AQI = \max(I_1, I_2, \dots, I_n)$.
+                <strong>Overall AQI Rule:</strong> Overall AQI is dictated by the maximum sub-index (dominant pollutant):{' '}
+                <span className="font-mono">AQI = max(I₁, I₂, …, Iₙ)</span>.
               </li>
               <li>
                 <strong>Averaging Periods:</strong> PM10, PM2.5, NO₂, SO₂ use 24-hour averages; CO and O₃ use 8-hour averages.

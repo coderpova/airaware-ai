@@ -35,6 +35,23 @@ describe('API Input Validation Schemas', () => {
       const result = AirQualityQuerySchema.safeParse(invalid);
       expect(result.success).toBe(false);
     });
+
+    it('rejects missing, null, and empty coordinate parameters', () => {
+      expect(AirQualityQuerySchema.safeParse({}).success).toBe(false);
+      expect(AirQualityQuerySchema.safeParse({ latitude: null, longitude: null }).success).toBe(false);
+      expect(AirQualityQuerySchema.safeParse({ latitude: '', longitude: '' }).success).toBe(false);
+      expect(AirQualityQuerySchema.safeParse({ latitude: '   ', longitude: '77.2' }).success).toBe(false);
+    });
+
+    it('accepts valid zero coordinates', () => {
+      const zero = { latitude: '0', longitude: '0' };
+      const result = AirQualityQuerySchema.safeParse(zero);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.latitude).toBe(0);
+        expect(result.data.longitude).toBe(0);
+      }
+    });
   });
 
   describe('GeocodingQuerySchema', () => {

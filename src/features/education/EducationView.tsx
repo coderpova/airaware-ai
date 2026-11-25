@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { CPCB_CATEGORIES } from '@/constants/breakpoints';
 import { AqiCategory } from '@/types/aqi';
 import {
@@ -11,9 +11,39 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
+type EducationTab = 'aqi' | 'particulates' | 'reading_charts' | 'actions';
+
+const EDUCATION_TABS: { id: EducationTab; label: string }[] = [
+  { id: 'aqi', label: 'What is AQI?' },
+  { id: 'particulates', label: 'PM2.5 vs PM10' },
+  { id: 'reading_charts', label: 'Reading Charts' },
+  { id: 'actions', label: 'Citizen Actions' },
+];
+
 export const EducationView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'aqi' | 'particulates' | 'reading_charts' | 'actions'>('aqi');
+  const [activeTab, setActiveTab] = useState<EducationTab>('aqi');
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const categories = Object.keys(CPCB_CATEGORIES) as AqiCategory[];
+
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex = index;
+    if (e.key === 'ArrowRight') {
+      nextIndex = (index + 1) % EDUCATION_TABS.length;
+    } else if (e.key === 'ArrowLeft') {
+      nextIndex = (index - 1 + EDUCATION_TABS.length) % EDUCATION_TABS.length;
+    } else if (e.key === 'Home') {
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      nextIndex = EDUCATION_TABS.length - 1;
+    } else {
+      return;
+    }
+
+    e.preventDefault();
+    const nextTab = EDUCATION_TABS[nextIndex];
+    setActiveTab(nextTab.id);
+    tabRefs.current[nextIndex]?.focus();
+  };
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -32,56 +62,48 @@ export const EducationView: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 max-w-xl mx-auto text-xs font-semibold">
-        <button
-          type="button"
-          onClick={() => setActiveTab('aqi')}
-          className={`flex-1 py-2 px-3 rounded-xl transition-all ${
-            activeTab === 'aqi'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-          }`}
-        >
-          What is AQI?
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('particulates')}
-          className={`flex-1 py-2 px-3 rounded-xl transition-all ${
-            activeTab === 'particulates'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-          }`}
-        >
-          PM2.5 vs PM10
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('reading_charts')}
-          className={`flex-1 py-2 px-3 rounded-xl transition-all ${
-            activeTab === 'reading_charts'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-          }`}
-        >
-          Reading Charts
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('actions')}
-          className={`flex-1 py-2 px-3 rounded-xl transition-all ${
-            activeTab === 'actions'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-bold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-          }`}
-        >
-          Citizen Actions
-        </button>
+      <div
+        role="tablist"
+        aria-label="Air quality education topics"
+        className="flex items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 max-w-xl mx-auto text-xs font-semibold"
+      >
+        {EDUCATION_TABS.map((tab, index) => {
+          const isSelected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              ref={(el) => {
+                tabRefs.current[index] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={isSelected}
+              aria-controls={`panel-${tab.id}`}
+              tabIndex={isSelected ? 0 : -1}
+              onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(e) => handleTabKeyDown(e, index)}
+              className={`flex-1 py-2 px-3 rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                isSelected
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab 1: What is AQI */}
       {activeTab === 'aqi' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div
+          role="tabpanel"
+          id="panel-aqi"
+          aria-labelledby="tab-aqi"
+          tabIndex={0}
+          className="space-y-6 animate-fadeIn focus:outline-none"
+        >
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
               What Does the Air Quality Index (AQI) Actually Measure?
@@ -168,7 +190,13 @@ export const EducationView: React.FC = () => {
 
       {/* Tab 2: PM2.5 vs PM10 */}
       {activeTab === 'particulates' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div
+          role="tabpanel"
+          id="panel-particulates"
+          aria-labelledby="tab-particulates"
+          tabIndex={0}
+          className="space-y-6 animate-fadeIn focus:outline-none"
+        >
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
               Understanding the Difference: PM2.5 vs PM10
@@ -230,7 +258,13 @@ export const EducationView: React.FC = () => {
 
       {/* Tab 3: Reading Charts */}
       {activeTab === 'reading_charts' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div
+          role="tabpanel"
+          id="panel-reading_charts"
+          aria-labelledby="tab-reading_charts"
+          tabIndex={0}
+          className="space-y-6 animate-fadeIn focus:outline-none"
+        >
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
               How to Read Urban Air Quality Charts
@@ -288,7 +322,13 @@ export const EducationView: React.FC = () => {
 
       {/* Tab 4: Citizen Actions */}
       {activeTab === 'actions' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div
+          role="tabpanel"
+          id="panel-actions"
+          aria-labelledby="tab-actions"
+          tabIndex={0}
+          className="space-y-6 animate-fadeIn focus:outline-none"
+        >
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
               Actionable Citizen Exposure Mitigation Checklist
