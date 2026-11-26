@@ -5,6 +5,7 @@ import { AirQualityResponse } from '@/types/api';
 import { SavedLocation } from '@/types/user';
 import { DEFAULT_LOCATION } from '@/constants/cities';
 import { loadUserPreferences } from '@/lib/storage/preferences';
+import { fetchCityAirQuality } from '@/lib/api/client';
 import { QuickCitySelector } from '@/features/dashboard/QuickCitySelector';
 import { HourlyAqiChart } from '@/features/forecast/HourlyAqiChart';
 import { PollutantTrendsChart } from '@/features/forecast/PollutantTrendsChart';
@@ -20,29 +21,28 @@ export default function ForecastPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function loadData() {
       setLoading(true);
       try {
-        const query = new URLSearchParams({
-          latitude: selectedLocation.latitude.toString(),
-          longitude: selectedLocation.longitude.toString(),
-          name: selectedLocation.name,
-          admin1: selectedLocation.admin1 || '',
-          country: selectedLocation.country || '',
-        });
-        const res = await fetch(`/api/air-quality?${query.toString()}`);
-        if (res.ok) {
-          const data: AirQualityResponse = await res.json();
+        const data = await fetchCityAirQuality(selectedLocation, controller.signal);
+        if (!controller.signal.aborted) {
           setAirData(data);
         }
       } catch (err) {
-        console.error('Failed to load forecast', err);
+        if (!controller.signal.aborted) {
+          console.error('Failed to load forecast', err);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     loadData();
+    return () => controller.abort();
   }, [selectedLocation]);
 
   return (

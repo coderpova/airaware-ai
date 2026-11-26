@@ -1,4 +1,4 @@
-import { AqiCategory, AqiCategoryInfo } from '@/types/aqi';
+import { AqiCategory, AqiCategoryInfo, PollutantType } from '@/types/aqi';
 
 export interface BreakpointRange {
   bLo: number;
@@ -21,7 +21,7 @@ export interface BreakpointRange {
  * - SO2: 24-hr avg (µg/m³)
  */
 
-export const CPCB_BREAKPOINTS: Record<string, BreakpointRange[]> = {
+export const CPCB_BREAKPOINTS: Record<PollutantType, BreakpointRange[]> = {
   pm2_5: [
     { bLo: 0, bHi: 30, iLo: 0, iHi: 50, category: 'Good' },
     { bLo: 31, bHi: 60, iLo: 51, iHi: 100, category: 'Satisfactory' },

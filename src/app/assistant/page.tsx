@@ -5,6 +5,7 @@ import { AirQualityResponse } from '@/types/api';
 import { SavedLocation, UserActivity, UserSensitivity } from '@/types/user';
 import { DEFAULT_LOCATION } from '@/constants/cities';
 import { loadUserPreferences, saveUserPreferences } from '@/lib/storage/preferences';
+import { fetchCityAirQuality } from '@/lib/api/client';
 import { generateHealthAdvisory } from '@/lib/ai/insight-engine';
 import { ActivitySelector } from '@/features/assistant/ActivitySelector';
 import { SensitivitySelector } from '@/features/assistant/SensitivitySelector';
@@ -26,29 +27,28 @@ export default function AssistantPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function loadData() {
       setLoading(true);
       try {
-        const query = new URLSearchParams({
-          latitude: selectedLocation.latitude.toString(),
-          longitude: selectedLocation.longitude.toString(),
-          name: selectedLocation.name,
-          admin1: selectedLocation.admin1 || '',
-          country: selectedLocation.country || '',
-        });
-        const res = await fetch(`/api/air-quality?${query.toString()}`);
-        if (res.ok) {
-          const data: AirQualityResponse = await res.json();
+        const data = await fetchCityAirQuality(selectedLocation, controller.signal);
+        if (!controller.signal.aborted) {
           setAirData(data);
         }
       } catch (err) {
-        console.error('Failed to load air data', err);
+        if (!controller.signal.aborted) {
+          console.error('Failed to load air data', err);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     loadData();
+    return () => controller.abort();
   }, [selectedLocation]);
 
   const handleActivityChange = (act: UserActivity) => {

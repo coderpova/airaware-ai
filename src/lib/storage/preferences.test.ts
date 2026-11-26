@@ -3,6 +3,7 @@ import {
   loadUserPreferences,
   saveUserPreferences,
   addRecentLocation,
+  resetUserPreferences,
   INITIAL_PREFERENCES,
 } from './preferences';
 import { QUICK_CITIES } from '@/constants/cities';
@@ -40,5 +41,12 @@ describe('Preferences Storage Management', () => {
     const loaded = loadUserPreferences();
     expect(loaded.preferredLocation.name).toBe('Mumbai');
     expect(loaded.recentLocations[0].name).toBe('Mumbai');
+  });
+
+  it('resets preferences back to initial defaults', () => {
+    saveUserPreferences({ activity: 'cycling', aqiAlertThreshold: 300 });
+    const reset = resetUserPreferences();
+    expect(reset).toEqual(INITIAL_PREFERENCES);
+    expect(loadUserPreferences()).toEqual(INITIAL_PREFERENCES);
   });
 });

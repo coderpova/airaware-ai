@@ -5,6 +5,7 @@ import { AirQualityResponse } from '@/types/api';
 import { SavedLocation, UserPreferences } from '@/types/user';
 import { DEFAULT_LOCATION } from '@/constants/cities';
 import { loadUserPreferences, saveUserPreferences, addRecentLocation } from '@/lib/storage/preferences';
+import { fetchCityAirQuality } from '@/lib/api/client';
 import { generateHealthAdvisory } from '@/lib/ai/insight-engine';
 import { QuickCitySelector } from '@/features/dashboard/QuickCitySelector';
 import { AqiGauge } from '@/features/dashboard/AqiGauge';
@@ -29,44 +30,29 @@ export default function DashboardPage() {
 
   // Fetch air quality data asynchronously
   useEffect(() => {
-    let isMounted = true;
+    const controller = new AbortController();
 
     async function fetchData() {
       try {
-        const query = new URLSearchParams({
-          latitude: selectedLocation.latitude.toString(),
-          longitude: selectedLocation.longitude.toString(),
-          name: selectedLocation.name,
-          admin1: selectedLocation.admin1 || '',
-          country: selectedLocation.country || '',
-        });
-
-        const res = await fetch(`/api/air-quality?${query.toString()}`);
-        if (!res.ok) {
-          const errJson = await res.json().catch(() => ({}));
-          throw new Error(errJson.message || `Failed to fetch air quality data (HTTP ${res.status})`);
-        }
-
-        const data: AirQualityResponse = await res.json();
-        if (isMounted) {
+        const data = await fetchCityAirQuality(selectedLocation, controller.signal);
+        if (!controller.signal.aborted) {
           setAirData(data);
           setLoading(false);
           setError(null);
           addRecentLocation(selectedLocation);
         }
       } catch (err: unknown) {
-        if (isMounted) {
-          const msg = err instanceof Error ? err.message : 'Error retrieving air quality data';
-          setError(msg);
-          setLoading(false);
-        }
+        if (controller.signal.aborted) return;
+        const msg = err instanceof Error ? err.message : 'Error retrieving air quality data';
+        setError(msg);
+        setLoading(false);
       }
     }
 
     fetchData();
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, [selectedLocation, fetchTrigger]);
 

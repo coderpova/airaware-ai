@@ -6,6 +6,7 @@ import { MapLegend } from '@/features/map/MapLegend';
 import { QUICK_CITIES } from '@/constants/cities';
 import { SavedLocation } from '@/types/user';
 import { AirQualityResponse } from '@/types/api';
+import { fetchCityAirQuality } from '@/lib/api/client';
 import { AqiBadge } from '@/components/ui/AqiBadge';
 import { MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -25,17 +26,13 @@ export default function MapPage() {
 
   // Load initial batch of quick cities
   useEffect(() => {
+    const controller = new AbortController();
+
     async function loadCities() {
       try {
         const promises = QUICK_CITIES.map(async (city) => {
           try {
-            const res = await fetch(
-              `/api/air-quality?latitude=${city.latitude}&longitude=${city.longitude}&name=${encodeURIComponent(
-                city.name
-              )}`
-            );
-            if (!res.ok) return null;
-            const data: AirQualityResponse = await res.json();
+            const data = await fetchCityAirQuality(city, controller.signal);
             const pm25 =
               data.current.pollutants.find((p) => p.id === 'pm2_5')?.displayConcentration ?? 0;
             const pm10 =
@@ -53,38 +50,45 @@ export default function MapPage() {
         });
 
         const results = await Promise.all(promises);
-        const valid = results.filter((r): r is CityMapItem => r !== null);
-        setCitiesData(valid);
+        if (!controller.signal.aborted) {
+          const valid = results.filter((r): r is CityMapItem => r !== null);
+          setCitiesData(valid);
+        }
       } catch (err) {
-        console.error('Failed to load cities map data', err);
+        if (!controller.signal.aborted) {
+          console.error('Failed to load cities map data', err);
+        }
       }
     }
 
     loadCities();
+    return () => controller.abort();
   }, []);
 
   // Fetch full details when a city is selected
   useEffect(() => {
+    const controller = new AbortController();
+
     async function loadDetails() {
       setLoadingDetails(true);
       try {
-        const res = await fetch(
-          `/api/air-quality?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&name=${encodeURIComponent(
-            selectedCity.name
-          )}`
-        );
-        if (res.ok) {
-          const data: AirQualityResponse = await res.json();
+        const data = await fetchCityAirQuality(selectedCity, controller.signal);
+        if (!controller.signal.aborted) {
           setSelectedCityDetails(data);
         }
       } catch (err) {
-        console.error('Failed to load city details', err);
+        if (!controller.signal.aborted) {
+          console.error('Failed to load city details', err);
+        }
       } finally {
-        setLoadingDetails(false);
+        if (!controller.signal.aborted) {
+          setLoadingDetails(false);
+        }
       }
     }
 
     loadDetails();
+    return () => controller.abort();
   }, [selectedCity]);
 
   return (

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AirQualityResponse } from '@/types/api';
 import { QUICK_CITIES } from '@/constants/cities';
+import { fetchCityAirQuality } from '@/lib/api/client';
 import { SavedLocation } from '@/types/user';
 import { AqiBadge } from '@/components/ui/AqiBadge';
 import {
@@ -28,42 +29,36 @@ export const CityComparisonView: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isCancelled = false;
+    const controller = new AbortController();
 
     async function loadData() {
       setLoading(true);
       try {
-        const fetchCity = async (loc: SavedLocation) => {
-          const res = await fetch(
-            `/api/air-quality?latitude=${loc.latitude}&longitude=${loc.longitude}&name=${encodeURIComponent(
-              loc.name
-            )}`
-          );
-          if (!res.ok) throw new Error(`Failed to load ${loc.name}`);
-          return res.json() as Promise<AirQualityResponse>;
-        };
-
         const [r1, r2, r3] = await Promise.all([
-          fetchCity(city1),
-          fetchCity(city2),
-          city3 ? fetchCity(city3) : Promise.resolve(null),
+          fetchCityAirQuality(city1, controller.signal),
+          fetchCityAirQuality(city2, controller.signal),
+          city3 ? fetchCityAirQuality(city3, controller.signal) : Promise.resolve(null),
         ]);
 
-        if (!isCancelled) {
+        if (!controller.signal.aborted) {
           setData1(r1);
           setData2(r2);
           setData3(r3);
         }
       } catch (err) {
-        console.error('Error fetching comparison data', err);
+        if (!controller.signal.aborted) {
+          console.error('Error fetching comparison data', err);
+        }
       } finally {
-        if (!isCancelled) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     loadData();
     return () => {
-      isCancelled = true;
+      controller.abort();
     };
   }, [city1, city2, city3]);
 

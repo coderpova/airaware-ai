@@ -60,3 +60,14 @@ export function addRecentLocation(location: SavedLocation): UserPreferences {
   const updatedRecent = [location, ...filtered].slice(0, 6);
   return saveUserPreferences({ recentLocations: updatedRecent, preferredLocation: location });
 }
+
+export function resetUserPreferences(): UserPreferences {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(PREFERENCES_STORAGE_KEY);
+    } catch (err) {
+      console.error('Failed to clear preferences from localStorage', err);
+    }
+  }
+  return INITIAL_PREFERENCES;
+}

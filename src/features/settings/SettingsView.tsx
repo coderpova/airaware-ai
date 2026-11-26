@@ -1,7 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { loadUserPreferences, saveUserPreferences } from '@/lib/storage/preferences';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  loadUserPreferences,
+  saveUserPreferences,
+  resetUserPreferences,
+} from '@/lib/storage/preferences';
 import { UserPreferences, UserActivity, UserSensitivity } from '@/types/user';
 import { QUICK_CITIES } from '@/constants/cities';
 import {
@@ -15,21 +19,35 @@ import {
 export const SettingsView: React.FC = () => {
   const [prefs, setPrefs] = useState<UserPreferences>(() => loadUserPreferences());
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showSavedToast = () => {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
+    setSavedFeedback(true);
+    feedbackTimerRef.current = setTimeout(() => setSavedFeedback(false), 2500);
+  };
 
   const handleUpdate = (updated: Partial<UserPreferences>) => {
     const newPrefs = saveUserPreferences(updated);
     setPrefs(newPrefs);
-    setSavedFeedback(true);
-    setTimeout(() => setSavedFeedback(false), 2500);
+    showSavedToast();
   };
 
   const handleReset = () => {
     if (confirm('Reset all saved local preferences to initial defaults?')) {
-      localStorage.removeItem('airaware_user_preferences_v1');
-      const reset = loadUserPreferences();
+      const reset = resetUserPreferences();
       setPrefs(reset);
-      setSavedFeedback(true);
-      setTimeout(() => setSavedFeedback(false), 2500);
+      showSavedToast();
     }
   };
 
